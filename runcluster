@@ -28,5 +28,5 @@ snakemake --jobname "{rulename}.{jobid}" --drmaa " -V -cwd -j y -o ./log -e ./lo
   -s ${SOURCE_DIR}/Snakefile -j ${JOB_COUNT} \
   --resources load=100 \
   --printshellcmds --keep-going --rerun-incomplete --latency-wait 30 \
-  --use-singularity --singularity-args "--bind /net:/net" \
+  --use-singularity --singularity-args "--bind /net:/net,/tmp:/tmp" \
   "$@"

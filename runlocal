@@ -27,5 +27,5 @@ shift
 snakemake \
   -s ${SOURCE_DIR}/Snakefile -j ${JOB_COUNT} \
   --printshellcmds --rerun-incomplete --latency-wait 30 \
-  --use-singularity --singularity-args "--bind /net/:/net/" \
+  --use-singularity --singularity-args "--bind /net/:/net/,/tmp:/tmp" \
   "$@"

@@ -135,7 +135,6 @@ rule mask_fasta:
         final_bed = rules.get_final_bed.output.final_bed
     output:
         masked_fasta = "results/{sample}/outputs/masked_fasta/{hap}.masked.fasta",
-        masked_fai = "results/{sample}/outputs/masked_fasta/{hap}.masked.fasta.fai"
     threads: 1,
     resources:
         mem = 8,
@@ -143,8 +142,9 @@ rule mask_fasta:
     singularity:
         "docker://eichlerlab/binf-basics:0.2"
     shell: """
-        seqtk seq -l 50 -M {input.final_bed} {input.fasta} > {output.masked_fasta}
-        samtools faidx {output.masked_fasta}
+        tmp_output="{output.masked_fasta}.tmp"
+        seqtk seq -l 50 -M {input.final_bed} {input.fasta} > $tmp_output
+        mv $tmp_output {output.masked_fasta}
         """
 
 

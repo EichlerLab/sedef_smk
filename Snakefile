@@ -25,3 +25,4 @@ manifest_df.set_index(["SAMPLE","HAP"], inplace=True)
 
 include: "rules/windowmasker.smk"
 include: "rules/mask.smk"
+include: "rules/sedef.smk"
