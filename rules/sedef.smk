@@ -7,15 +7,12 @@ rule sedef:
     threads: 32,
     resources:
         hrs=72,
-        mem=4,
+        mem=2,
     singularity: 
         "docker://eichlerlab/sedef:1.1"
     shell: """
         set -euo pipefail
-        which bc
-        which time
         tmp_out="{resources.tmpdir}/{wildcards.sample}-{wildcards.hap}-sedef_out"
-        trap 'rm -rf "{resources.tmpdir}/{wildcards.sample}-{wildcards.hap}-sedef_out"' EXIT
         sedef.sh -j {threads} -f -o $tmp_out {input.masked_fasta}
         rsync -av $tmp_out/final* {output.sedef_out}/
         touch {output.flag}

@@ -13,7 +13,10 @@ rule index_fasta:
         mem = 8,
         hrs = 4,
     shell: """
-        ln -sf $(readlink -f {input.fasta}) {output.fasta}
+        tmp_fasta="{output.fasta}.tmp"
+        # to prevent errors in sedef.sh due to "#" in the contig names.
+        sed '/^>/ s/#/__/g' "$(readlink -f {input.fasta})" > "$tmp_fasta"
+        mv $tmp_fasta {output.fasta}
         samtools faidx {output.fasta}
         """
 

@@ -1,31 +1,55 @@
 def get_RM_bed(wildcards):
     return manifest_df.loc[(wildcards.sample, wildcards.hap), "RM"]
 
-def get_TRF_bed(wildcards):
+def get_trf_bed(wildcards):
     return manifest_df.loc[(wildcards.sample, wildcards.hap), "TRF"]
+
+rule refine_beds:
+    input:
+        rm_bed = get_RM_bed,
+        trf_bed = get_trf_bed,
+    output:
+        rm_bed = "results/{sample}/work/split_beds/refined_beds/{hap}.RM.bed",
+        trf_bed = "results/{sample}/work/split_beds/refined_beds/{hap}.trf.bed",
+    threads: 1,
+    resources:
+        mem=16,
+        hrs=4,
+    shell: """
+        tmp_rm_bed="{output.rm_bed}.tmp"
+        tmp_trf_bed="{output.trf_bed}.tmp"
+
+        if [[ "{input.rm_bed}" == *.gz ]]; then
+            gzip -cd "{input.rm_bed}" | sed 's/#/__/g' > "$tmp_rm_bed"
+        else
+            sed 's/#/__/g' "{input.rm_bed}" > "$tmp_rm_bed"
+        fi
+        mv "$tmp_rm_bed" "{output.rm_bed}"
+
+        if [[ "{input.trf_bed}" == *.gz ]]; then
+            gzip -cd "{input.trf_bed}" | sed 's/#/__/g' > "$tmp_trf_bed"
+        else
+            sed 's/#/__/g' "{input.trf_bed}" > "$tmp_trf_bed"
+        fi
+        mv "$tmp_trf_bed" "{output.trf_bed}"    
+    """
 
 rule split_hap_bed:
     input:
         fai = rules.index_fasta.output.fai,
-        rm_bed = get_RM_bed,
-        trf_bed = get_TRF_bed,
+        rm_bed = rules.refine_beds.output.rm_bed,
+        trf_bed = rules.refine_beds.output.trf_bed,
     output:
         hap_rm_bed = "results/{sample}/work/split_beds/outputs/{hap}.RM.bed",
-        hap_trf_out = "results/{sample}/work/split_beds/outputs/{hap}.trf.out", ## NOTE: The raw TRF BEDGZ is not a BED format. 1-base / 1-base coordinate
+        hap_trf_out = "results/{sample}/work/split_beds/outputs/{hap}.trf.out", ## NOTE: The raw trf BEDGZ is not a BED format. 1-base / 1-base coordinate
     threads: 1,
     resources:
         mem = 16,
         hrs = 24,
     run:
-        def is_gzip(__path):
-            with open(__path, "rb") as filehead:
-                return filehead.read(2) == b"\x1f\x8b"
-
         def filter_bed_by_contigs(bed_in: str, bed_out: str, contigs: set[str]) -> None:
             bed_in_path = Path(bed_in)
-            opener = gzip.open if is_gzip(bed_in_path) else open
-
-            with opener(bed_in_path, "rt") as fin, open(bed_out, "w") as fout:
+            with open(bed_in_path) as fin, open(bed_out, "w") as fout:
                 for line in fin:
                     if not line.strip():
                         continue
@@ -44,7 +68,7 @@ rule split_hap_bed:
 
         # RM BED process
         filter_bed_by_contigs(input.rm_bed, output.hap_rm_bed, hap_contigs)
-        # TRF out process
+        # trf out process
         filter_bed_by_contigs(input.trf_bed, output.hap_trf_out, hap_contigs)
 
 
@@ -52,7 +76,7 @@ rule sort_trf_bed:
     input:
         trf_out = rules.split_hap_bed.output.hap_trf_out,
     output:
-        sorted_trf_bed = "results/{sample}/work/split_beds/outputs/{hap}.TRF.sorted.bed",
+        sorted_trf_bed = "results/{sample}/work/split_beds/outputs/{hap}.trf.sorted.bed",
     threads: 1,
     resources:
         mem = 4,
@@ -77,9 +101,9 @@ rule get_final_bed:
         hap_fai = rules.index_fasta.output.fai,
     output:
         sorted_rm_bed = "results/{sample}/work/split_beds/outputs/{hap}.RM.sorted.bed",
-        merged_trf_bed = "results/{sample}/work/merge_beds/outputs/{hap}.TRF.merged.bed",
-        trf_wm_bed = "results/{sample}/work/merge_beds/outputs/{hap}.TRF_WM.bed",
-        merged_trf_wm_bed = "results/{sample}/work/merge_beds/outputs/{hap}.mTRF_WM.bed",
+        merged_trf_bed = "results/{sample}/work/merge_beds/outputs/{hap}.trf.merged.bed",
+        trf_wm_bed = "results/{sample}/work/merge_beds/outputs/{hap}.trf_WM.bed",
+        merged_trf_wm_bed = "results/{sample}/work/merge_beds/outputs/{hap}.merged_trf_WM.bed",
         final_bed = "results/{sample}/outputs/final_bed/{hap}.final_repeat.bed",
         flag = "results/{sample}/work/get_final_bed/flag/{hap}.final_repeat_bed.done"
     threads: 1,
