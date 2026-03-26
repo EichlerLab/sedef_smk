@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+args=()
+for a in "$@"; do
+    [[ "$a" == "--bar" ]] && continue
+    args+=("$a")
+done
+exec /usr/bin/parallel "${args[@]}"
