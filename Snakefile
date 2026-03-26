@@ -44,7 +44,7 @@ groups = asm_manifest_df.reset_index()[["SAMPLE", "HAP"]].drop_duplicates().copy
 
 rule all:
     input:
-        expand("results/{sample}/final_outputs/beds/{hap}.SDs.bed",
+        expand("results/{sample}/final_outputs/beds/{hap}.SDs.merged.bed",
             zip,
             sample=groups["SAMPLE"],
             hap=groups["HAP"],

@@ -158,6 +158,22 @@ rule restore_bed:
         sed 's/__/#/g' {input.sd_filt_bed} > {output.sd_filt_bed}
     """
 
+rule merge_final_bed:
+    input:
+        sd_bed = rules.restore_bed.output.sd_bed,
+        sd_filt_bed = rules.restore_bed.output.sd_filt_bed,
+    output:
+        merged_sd_bed = "results/{sample}/final_outputs/beds/{hap}.SDs.merged.bed",
+        merged_sd_filt_bed = "results/{sample}/final_outputs/beds/{hap}.SDs.lowid.merged.bed",
+        flag = touch("results/{sample}/work/get_final_beds/flags/merge_final_bed.{hap}.done")
+    threads: 1,
+    resources:
+        mem = 8,
+        hrs = 4,
+    shell: """
+        bedtools merge -i {input.sd_bed} > {output.merged_sd_bed}
+        bedtools merge -i {input.sd_filt_bed} > {output.merged_sd_filt_bed}
+    """
 
 rule make_bigbeds:
     input:
