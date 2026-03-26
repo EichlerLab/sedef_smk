@@ -1,7 +1,16 @@
 import sys,os
 
-fout = open("tmp_SD_flanking.bed",'w')
-with open("sedef_out/final.bed",'r') as fp:
+sedef_bed = snakemake.input.sedef_bed
+sorted_trf_bed = snakemake.input.sorted_trf_bed
+
+tmp_sd_flanking_bed = snakemake.output.sd_flanking_bed
+trf_10k_bed = snakemake.output.trf_10k_bed
+tmp_sd_flanking_vntr_bed = snakemake.output.sd_flanking_vntr_bed
+sedef_rm_vntr_bed = snakemake.output.sedef_rm_vntr_bed
+
+
+fout = open(tmp_sd_flanking_bed,'w')
+with open(sedef_bed,'r') as fp:
     for line in fp:
         if line.startswith("#"):continue
         line_temp = line.strip().split('\t')
@@ -19,23 +28,23 @@ with open("sedef_out/final.bed",'r') as fp:
             fout.write(line_temp[3]+'\t'+str(0)+'\t'+line_temp[5]+'\t'+sname+'\n')
 fout.close()
 
-fout = open("trf.10k.bed",'w')
-with open(sys.argv[1],'r') as fp2: #"trf.sorted.merged.bed",'r') as fp2:
+fout = open(trf_10k_bed,'w')
+with open(sorted_trf_bed,'r') as fp2: #"trf.sorted.merged.bed",'r') as fp2:
     for line in fp2:
         line_temp = line.strip().split('\t')
         if int(line_temp[2]) - int(line_temp[1]) > 10000:
             fout.write(line)
 fout.close()
-os.system("bedtools intersect -f 1 -a tmp_SD_flanking.bed -b trf.10k.bed -wa > tmp_SD_flanking.overlapped_VNTR.bed")
+os.system(f"bedtools intersect -f 1 -a {tmp_sd_flanking_bed} -b {trf_10k_bed} -wa > {tmp_sd_flanking_vntr_bed}")
 
 dd = {}
-with open("tmp_SD_flanking.overlapped_VNTR.bed",'r') as fp3:
+with open(tmp_sd_flanking_vntr_bed,'r') as fp3:
     for line in fp3:
         line_temp = line.strip().split('\t')
         dd[line_temp[3]] = ''
 
-fout = open("sedef_out/final.rmVNTR.bed",'w')
-with open("sedef_out/final.bed",'r') as fp:
+fout = open(sedef_rm_vntr_bed,'w')
+with open(sedef_bed,'r') as fp:
     for line in fp:
         if line.startswith("#"):
             fout.write(line)

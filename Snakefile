@@ -3,25 +3,57 @@
 import pandas as pd
 import gzip
 from pathlib import Path
+import sys
+import os
 
 SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
 
-def get_asm_manifest_df(manifest_df):
-    add_haps = {"H2": "hap2"}
+def get_asm_manifest_df(raw_manifest_df):
+    hap_map = {
+        "H1": "hap1",
+        "H2": "hap2",
+    }
+
     rows = []
-    for idx, row in manifest_df.iterrows():
-        if "H1" in manifest_df.columns and pd.notna(row["H1"]) and str(row["H1"]).strip():
-            rows.append({"SAMPLE": row["SAMPLE"], "HAP": "hap1", "FASTA": row["H1"], "RM":row["RM"], "TRF":row["TRF"]})
-        for col in add_haps:
-            if col in manifest_df.columns and pd.notna(row[col]) and str(row[col]).strip():
-                rows.append({"SAMPLE": row["SAMPLE"], "HAP": add_haps[col], "FASTA": row[col], "RM":row["RM"], "TRF":row["TRF"]})
+    for _, row in raw_manifest_df.iterrows():
+        sample = row["SAMPLE"]
+
+        for col, hap in hap_map.items():
+            if col in raw_manifest_df.columns and pd.notna(row[col]) and str(row[col]).strip():
+                rows.append(
+                    {
+                        "SAMPLE": sample,
+                        "HAP": hap,
+                        "FASTA": row[col],
+                    }
+                )
+
     return pd.DataFrame(rows)
 
-raw_manifest_df = pd.read_csv("manifest.tab", sep="\t", comment="#")
-manifest_df = get_asm_manifest_df(raw_manifest_df)
-groups = manifest_df[["SAMPLE","HAP"]].drop_duplicates().copy()
-manifest_df.set_index(["SAMPLE","HAP"], inplace=True)
 
+raw_manifest_df = pd.read_csv("manifest.tab", sep="\t", comment="#")
+
+# sample-level manifest
+sample_manifest_df = raw_manifest_df.set_index("SAMPLE", drop=False).copy()
+
+# hap-level manifest
+asm_manifest_df = get_asm_manifest_df(raw_manifest_df)
+asm_manifest_df.set_index(["SAMPLE", "HAP"], inplace=True)
+
+groups = asm_manifest_df.reset_index()[["SAMPLE", "HAP"]].drop_duplicates().copy()
+
+rule all:
+    input:
+        expand("results/{sample}/final_outputs/beds/{hap}.SDs.bed",
+            zip,
+            sample=groups["SAMPLE"],
+            hap=groups["HAP"],
+        ),
+        expand("results/{sample}/final_outputs/bigbeds/{hap}.SDs.bb",
+            zip,
+            sample=groups["SAMPLE"],
+            hap=groups["HAP"],
+        )
 
 include: "rules/windowmasker.smk"
 include: "rules/mask.smk"
