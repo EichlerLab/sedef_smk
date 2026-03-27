@@ -1,0 +1,2 @@
+SAMPLE	H1	H2	RM	TRF
+SMHT001_DSA_v1	/net/eichler/vol28/projects/smaht/nobackups/analysis/assembly_qc/results/SMHT001_DSA_v1/contamination_screening/outputs/final_fasta/SMHT001_DSA_v1_hap1.fasta	/net/eichler/vol28/projects/smaht/nobackups/analysis/assembly_qc/results/SMHT001_DSA_v1/contamination_screening/outputs/final_fasta/SMHT001_DSA_v1_hap2.fasta	/net/eichler/vol28/projects/smaht/nobackups/annotation/rhodonite/results/SMHT001_DSA_v1/RepeatMasker/RM.bed.gz	/net/eichler/vol28/projects/smaht/nobackups/annotation/rhodonite/results/SMHT001_DSA_v1/trf/trf.bed.gz
